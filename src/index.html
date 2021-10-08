@@ -1,0 +1,660 @@
+<html>
+
+  <head>
+
+    <title>YobiSeed (Standalone)</title>
+ </head>
+
+  <body>
+
+    <style type="text/css">
+
+    body, html {
+      font-family: Arial;
+    }
+
+    label {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    input, textarea, select {
+    padding: 5px;
+    font-size: 19px;
+      width: 100%;
+    }
+
+    .unitValue {
+      width: 25%;
+    }
+
+    .unitSelector, .dataKindSelector {
+      width: 14%;
+	  background-color:lavender;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .scrollable {
+      overflow-y: scroll;
+      max-height: 100%;
+      height: 99%;
+    }
+
+    #result {
+      border: 1px solid #333;
+      padding: 20px;
+    }
+.btnNonce {
+    font-size: 30px;
+    height: 36px;
+    width: 163px;
+    position: relative;
+    top: 6px;
+		}
+    #onlineWarning {
+      padding: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      color: darkred;
+      border: 1px solid darkred;
+    }
+
+    </style>
+
+<script>
+  function changeSignButton(option, optionText) {
+    document.getElementById('signTransaction').setAttribute('option-data',option);
+    document.getElementById('signTransaction').setAttribute('value',optionText);
+
+    if (option == "send") {
+        
+      document.getElementById('data').style.display = "none";
+      document.getElementById('dataKind').style.display = "none";
+      document.getElementById('dataText').style.display = "none";
+
+      document.getElementById('to').style.display = "initial";
+      document.getElementById('toText').style.display = "initial";
+
+      document.getElementById('value').style.display = "initial";
+      document.getElementById('valueUnit').style.display = "initial";
+      document.getElementById('valueText').style.display = "initial";
+
+        } else if (option == "smartcontract") {
+         
+      document.getElementById('data').style.display = "initial";
+      document.getElementById('dataKind').style.display = "initial";
+      document.getElementById('dataText').style.display = "initial";
+
+      document.getElementById('to').style.display = "initial";
+      document.getElementById('toText').style.display = "initial";
+
+      document.getElementById('value').style.display = "initial";
+      document.getElementById('valueUnit').style.display = "initial";
+      document.getElementById('valueText').style.display = "initial";
+
+        } else if (option == "deploy") {
+          
+      document.getElementById('data').style.display = "initial";
+      document.getElementById('dataKind').style.display = "initial";
+      document.getElementById('dataText').style.display = "initial";
+
+      document.getElementById('to').style.display = "none";
+      document.getElementById('toText').style.display = "none";
+
+      document.getElementById('value').style.display = "none";
+      document.getElementById('valueUnit').style.display = "none";
+      document.getElementById('valueText').style.display = "none";
+        }
+  }
+  
+
+  function downloadFile() {
+    
+    var obj = document.getElementById('signedTransactionData').innerHTML;
+    var nonceTxt = document.getElementById('nonce').value;
+    var addTxt = document.getElementById('from').value.substring(0,8);
+    var d = new Date();
+    var n = d.toISOString();
+    var filename = nonceTxt+"-"+addTxt+"-"+n+".txt";
+    var blob = new Blob([obj], {type: 'text/plain'});
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+    } else{
+        var e = document.createEvent('MouseEvents'),
+        a = document.createElement('a');
+        a.download = filename;
+        a.href = window.URL.createObjectURL(blob);
+        a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+        e.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        a.dispatchEvent(e);
+    }
+}
+  </script>
+    <div style="margin: 0px auto; width: 500px; display: block;">
+
+      
+
+      <h1>YobiSeed - Eth Signer</h1>
+        <div id="onlineWarning" style="display: none;">
+        WARNING: You are currently online and connected to the internet. This tool is meant to be used on an offline (preferably on an air-gapped computer).
+
+        <br /><br />
+
+        Do not use this tool with your actual private keys while connected to the internet.
+      </div>
+
+      <h3 style="margin-bottom: 0;"><u>Select a transaction type :</u></h3>
+      <input onclick="changeSignButton('send', 'Sign Transaction')"  type="radio" id="send" name="txType" value="send" style="width: 15px;" checked>
+      <label for="send">&#128176; Send ETH to Address (transaction)</label><br>
+      <input onclick="changeSignButton('smartcontract', 'Sign Smart Contract Interaction')"  type="radio" id="smartcontract" name="txType" value="smartcontract" style="width: 15px;">
+      <label for="smartcontract">&#128221; Interact with a smart contract</label><br>
+      <input onclick="changeSignButton('deploy','Sign Smart Contract Deployment')" type="radio" id="deploy" name="txType" value="deploy" style="width: 15px;">
+      <label for="deploy">&#128216; Deploy Smart Contract</label><br>
+
+     
+
+      <div id="privateKeyWrapper">
+
+        <br />
+
+        <label>&#128273; Private Key</label> <br />
+        <input type="password" id="privatekey" placeholder="Ex: 0xe230d63e82551f42a1d00ee75448e01f5370ba387998835415983144a46bd504" autofocus /> <br /> <br />
+
+
+      </div>
+
+      <div id="transactionFields" style="display: initial;">
+
+
+
+        <label>&#128231; From Address (your account address)</label> <br />
+        <input type="text" id="from" disabled="disabled" placeholder="Your address will appear here after adding your privateKey"/> <br /> <br />
+
+
+        <label id="toText">&#128238; To Address</label> <br />
+        <input type="text" id="to" placeholder="Ex: 0x325e4f509e582cfeD31b767bc9F992f5b86f0e67" /> <br /> <br />
+
+		          <label id="valueText">&#128184; Value</label> <br />
+          <input type="number" id="value" class="unitValue" placeholder="Ex: 2 [ether]" value="0" />
+
+          <select id="valueUnit" class="unitSelector" data-target="value">
+            <option value="wei">wei</option>
+
+            <option value="gwei">Gwei</option>
+
+            <option value="ether" selected="selected">ether</option>
+          </select>
+
+          <br /> <br />
+		  
+        <div style="float:left;">
+        <label>&#9981; Gas</label> <i>Max : 30 000 000</i><br />
+        <input type="number" id="gas" class="unitValue" placeholder="Ex: 500000" value="500000" style="width: 80%;"/>
+		</div>
+
+
+		<div>
+        <label>&#128278; Gas Price</label> <br />
+        <input type="number" id="gasPrice" class="unitValue" placeholder="Ex: 5 [gWei]" value="5" />
+
+        <select id="gasPriceUnit" class="unitSelector" data-target="gasPrice">
+          <option value="wei">wei</option>
+
+          <option value="gwei" selected="selected">Gwei</option>
+
+          <option value="ether">ether</option>
+        </select>
+		</div>
+
+          <br />
+
+
+          <label>&#128205; Chain ID</label> <i>https://chainlist.org</i><br />
+          <input type="number" id="chainId" placeholder="Mainnet=1, Ropsten=3, Rinkeby=4, Optimism=10..."/>
+
+          <br /> <br />
+		          <label>&#128197; Nonce</label> <i>+1 for each OUT transaction.</i><br />
+        <input type="text" id="nonce" style="width: 163px;" placeholder="0 for new address"/>
+		<button class="btnNonce" onmousedown="mouseDown_i()" onmouseup="mouseUp()" onmouseleave="mouseLeave()">+</button>
+		<button class="btnNonce" onmousedown="mouseDown_d()" onmouseup="mouseUp()" onmouseleave="mouseLeave()">-</button>
+		
+
+
+		<br /> <br />
+
+          <label id="dataText" style="display:none;">&#128230; Data</label> <br />
+
+          <select id="dataKind" class="dataKindSelector" onchange="cpzFunction(value);" style="width: 99%;display:none;">
+            <option value="noData">No Data</option>
+            <option value="custom" selected>Custom Data (experts only)</option>
+            <option disabled></option>
+            <option disabled>CryptoPuzzle</option>
+            <option value="withdraw">&nbsp;&nbsp;&nbsp;&nbsp;withdraw</option>
+			<option value="claimtoken">&nbsp;&nbsp;&nbsp;&nbsp;claimtoken</option>
+			<option value="deposit">&nbsp;&nbsp;&nbsp;&nbsp;deposit</option>
+			<option value="forceBuy">&nbsp;&nbsp;&nbsp;&nbsp;forceBuy</option>
+			<option value="takeAJack">&nbsp;&nbsp;&nbsp;&nbsp;takeAJack</option>
+			<option value="transferToken">&nbsp;&nbsp;&nbsp;&nbsp;transferToken</option>
+			
+	
+	  
+          </select> <br />
+
+        
+
+          <br />
+
+          <input id="data" placeholder="Date must be HEX and start with 0x" value="0x" style="display:none;"/> <br /> 
+
+		<div id="dataWrapper" style="background-color: red;display: none;margin-top: 20px;    padding: 10px;">
+		  
+		  <label><u>Transaction data arguments</u></label> <br /><br />
+		  
+		<label id="dataWrapperLabel1" style="display:none">To Address</label> <br />
+        <input type="text" id="dataWrapperInput1" style="display:none"/>
+		
+		<label id="dataWrapperLabel2" style="margin-top: 20px;display:none">To Address</label> <br />
+        <input type="text" id="dataWrapperInput2" style="display:none"/>
+		
+		
+		<input style="margin-top: 20px; width:300px;margin-left:100px;" type="button" id="dataWrapperButton" value="Add data" onclick="">
+	
+          </div>
+<br />
+        <input type="button" id="signTransaction" value="Sign Transaction" option-data="send" style="width: 300px;margin-left: 100px;height: 60px;background-color: chartreuse;cursor: pointer;"/>
+		
+		
+
+
+      </div>
+
+
+      <br /><br />
+
+      <div id="result" style="display: none; margin-bottom:20px;"></div>
+
+
+    </div>
+
+    <div id="signedTransactionDataWrapper" style=" color: rgb(0, 0, 0); z-index: 5000; top: 0px; bottom: 0px; right: 0px; left: 0px; display: none; background: rgb(127, 214, 92); text-align: center; padding-top: 30px;">
+
+      
+
+        <h3>Raw Signed Transaction Data</h3>
+
+        <textarea id="rawSignedTransactionData" style="width: 500px;height: 147px;"></textarea>
+
+        <br /><br />
+
+        <h3>Signed Transaction Data</h3>
+		<input type="button" onclick="downloadFile();" value="Download" style="width: 150px;height: 26px;padding: 1px;margin: -20px;position: absolute;">
+		<input type="button" onclick="copyClip('signedTransactionData');" value="Copy to clipboard" style="width: 200px;height: 26px;padding: 1px;margin: -20px 153px;position: absolute;">
+		
+		
+
+        <textarea id="signedTransactionData" style="width: 500px;height: 140px;"></textarea>
+
+        <br /><br />
+
+        <canvas id="signedTransactionDataQRCode" width="500" height="500" style="width: 500px; height: 500px; display: inline-block;"></canvas>
+
+        <br /><br />
+
+        <button id="closeTransactionQRCodeQR" style="padding: 20px; cursor: pointer;"><h3>Hide Signed Transaction</h3></button>
+
+        <br /><br />
+
+      
+
+    </div>
+
+
+
+    <script src="qrious.js"></script>
+
+    <script src="web3.min.js"></script>
+		
+   <script type="text/javascript">
+        // WEB3
+        var web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+		 
+		
+		function openAddressQRCode(eventValue) {
+		var startsWith0x = '';
+		
+		if (!eventValue.target.value.startsWith('0x')) {startsWith0x='0x'};
+        const privateKey = startsWith0x+handleValue(eventValue.target.value);
+		console.log(privateKey);
+        if ((web3.utils.isHex(privateKey) && privateKey.length == 66) || (web3.utils.isHexStrict(privateKey) && privateKey.length == 68))  {
+		
+		
+		
+		const address = web3.eth.accounts.privateKeyToAccount(privateKey).address;
+  
+  
+        el('#from').value = address;
+        el('#privateKeyWrapper').style.display = 'initial';
+        el('#result').style.display = 'none';
+        el('#transactionFields').style.display = 'block';
+		
+
+        } else {
+		          result('Error while processing private key: your private key is not a 64 byte hex prefixed (0x...) Ethereum private key.');
+				  el('#from').value = "Error";
+          return;
+		  }
+  
+  
+      }
+    
+  
+      function showSignedTransactionData(signedTxData, rawSignedTxData) {
+        result('Transaction successfully signed.');
+        el('#result').style.backgroundColor = 'chartreuse';
+        el('#rawSignedTransactionData').innerHTML = '';
+        el('#signedTransactionData').innerHTML = '';
+        el('#signedTransactionDataWrapper').style.display = 'block';
+        el('#signedTransactionData').innerHTML = signedTxData;
+        el('#rawSignedTransactionData').innerHTML = formatTransactionData(rawSignedTxData);
+  
+        const signedTransactionQRCode = new QRious({
+          element: document.getElementById('signedTransactionDataQRCode'),
+          size: 500,
+          value: signedTxData,
+        });
+      }
+  
+  
+      function signTransaction() {
+        var options = document.getElementById("signTransaction").getAttribute("option-data");
+        try {
+
+          const privateKey = handleValue(el('#privateKey').value);
+          const to = handleValue(el('#to').value);
+		  
+		  const from = handleValue(el('#from').value);
+  
+          const valueUnit = handleValue(el('#valueUnit').value);
+          const value = web3.utils.toWei(handleValue(el('#value').value), valueUnit);
+			console.log("Value wei:"+value);
+          const gas = handleValue(el('#gas').value);
+  
+          const gasPriceUnit = handleValue(el('#gasPriceUnit').value);
+          const gasPrice = web3.utils.toWei(handleValue(el('#gasPrice').value), gasPriceUnit).toString(10);
+  
+          const chainId = handleValue(el('#chainId').value);
+  
+          const nonce = handleValue(el('#nonce').value);
+          const data = handleValue(el('#data').value);
+  
+          let rawTransactionData = {};
+          if (options == "send") {
+            rawTransactionData = {
+              gas: gas,
+              gasPrice: gasPrice,
+              nonce: nonce,
+              chainId: chainId,
+              to:to,
+			  from:from,
+              value:value
+            };
+          } else if (options == "smartcontract") {
+            rawTransactionData = {
+              gas: gas,
+              gasPrice: gasPrice,
+              nonce: nonce,
+              data: data,
+              chainId: chainId,
+              to: to,
+			  from:from,
+              value:value,
+            };
+          } else if (options == "deploy") {
+            rawTransactionData = {
+              gas: gas,
+              gasPrice: gasPrice,
+              nonce: nonce,
+              data: data,
+			  from:from,
+			  to:"",
+              chainId: chainId,
+            };
+          }
+            console.log(rawTransactionData);
+		
+            //const signedTxData = ethSigner.sign(Object.assign({}, rawTransactionData), privateKey);
+            web3.eth.accounts.signTransaction(rawTransactionData,privateKey).then((value) => {showSignedTransactionData(value.rawTransaction, rawTransactionData)});
+			
+
+  // expected output: "Success!"
+
+            /*
+            const basicSignedTxDataErrors = checkBasicSignedTxErrors(signedTxData);
+  
+            if (basicSignedTxDataErrors) {
+              result('Error with signed transaction data: ' + String(basicSignedTxDataErrors));
+              return;
+            }
+            */
+            
+          
+  
+        } catch (transactionError) {
+          result('Error while processing transaction data: ' + String(transactionError));
+          return;
+        }
+      }
+	  
+      function formatTransactionData(rawData) {
+        return JSON.stringify(Object.assign({}, {
+          to: rawData.to,
+          value: formatNumberData(rawData.value),
+          gas: formatNumberData(rawData.gas),
+          gasPrice: formatNumberData(rawData.gasPrice),
+          nonce: formatNumberData(rawData.nonce),
+          chainId: formatNumberData(rawData.chainId),
+          data: rawData.data,
+        }), null, 2);
+      }
+	  
+	  function formatNumberData(rawStringBase10Number) {
+        return padToEven((web3.utils.numberToHex(rawStringBase10Number)));
+      }
+	     function padToEven(str) {
+        return str.length % 2 ? `0${str}` : str;
+      }
+	  
+	
+
+
+
+
+
+
+
+
+
+
+var timeout_;
+
+function mouseDown_i() {
+  value = isNaN(parseInt(document.getElementById('nonce').value)) ? 0 : parseInt(document.getElementById('nonce').value);
+  document.getElementById('nonce').value = value + 1;  
+  timeout_ = setTimeout(function() { mouseDown_i(); }, 150);
+}
+
+function mouseDown_d() {
+  value = isNaN(parseInt(document.getElementById('nonce').value)) ? 0 : parseInt(document.getElementById('nonce').value);
+  value - 1 <= 0 ? document.getElementById('nonce').value = '' : document.getElementById('nonce').value = value - 1;  
+  timeout_ = setTimeout(function() { mouseDown_d(); }, 150);
+}
+
+function mouseUp() { clearTimeout(timeout_); }
+
+function mouseLeave() { clearTimeout(timeout_); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	  
+	      
+		
+        function copyClip(arg) {
+            var copyText = document.getElementById(arg);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+        }
+      function el(query) {
+      return document.querySelector(query);
+      }
+    
+	      function handleValue(value) {
+        return String(value).trim().toLowerCase();
+      }
+	  
+      function load() {
+          
+        el('#signTransaction').addEventListener('click', signTransaction);
+        el('#closeTransactionQRCodeQR').addEventListener('click', closeTransactionQRCode);
+        el('#privateKey').addEventListener('change', openAddressQRCode);
+        el('#privateKey').addEventListener('keyup', openAddressQRCode);
+  ;
+      };
+	  
+	  window.addEventListener('load', load);
+	  
+	  
+	       function result(val) {
+        el('#result').style.display = 'block';
+        el('#result').style.backgroundColor = 'firebrick';
+        el('#result').innerHTML = val;
+      }
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  // QR CODE
+	    
+      function closeTransactionQRCode() {
+        el('#signedTransactionDataWrapper').style.display = 'none';
+      }
+  
+  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+      </script>
+  
+	<script type="text/javascript">
+	// CRYPTOPUZZLE
+const MyContract = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"_a_contract_address","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenIndex","type":"uint256"}],"name":"Assign","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"}],"name":"Claim","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"}],"name":"SaleForced","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint8","name":"NumberRobot","type":"uint8"},{"indexed":true,"internalType":"string","name":"robotString","type":"string"}],"name":"Store","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"maker","type":"address"},{"indexed":false,"internalType":"uint256","name":"makerWei","type":"uint256"},{"indexed":false,"internalType":"uint256[]","name":"makerIds","type":"uint256[]"},{"indexed":true,"internalType":"address","name":"taker","type":"address"},{"indexed":false,"internalType":"uint256","name":"takerWei","type":"uint256"},{"indexed":false,"internalType":"uint256[]","name":"takerIds","type":"uint256[]"},{"indexed":false,"internalType":"uint256","name":"expiry","type":"uint256"},{"indexed":false,"internalType":"bytes","name":"signature","type":"bytes"}],"name":"Trade","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"maker","type":"address"},{"indexed":false,"internalType":"uint256","name":"makerWei","type":"uint256"},{"indexed":false,"internalType":"uint256[]","name":"makerIds","type":"uint256[]"},{"indexed":true,"internalType":"address","name":"taker","type":"address"},{"indexed":false,"internalType":"uint256","name":"takerWei","type":"uint256"},{"indexed":false,"internalType":"uint256[]","name":"takerIds","type":"uint256[]"},{"indexed":false,"internalType":"uint256","name":"expiry","type":"uint256"}],"name":"TradeCancelled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"tokenIndex","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"}],"name":"Withdraw","type":"event"},{"inputs":[],"name":"OWNERCUTPERCENTAGE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"PRIZECUTPERCENTAGE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"TOTALSUPPLY","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"maker","type":"address"},{"internalType":"uint256","name":"makerWei","type":"uint256"},{"internalType":"uint256[]","name":"makerIds","type":"uint256[]"},{"internalType":"address","name":"taker","type":"address"},{"internalType":"uint256","name":"takerWei","type":"uint256"},{"internalType":"uint256[]","name":"takerIds","type":"uint256[]"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"acceptTrade","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"maker","type":"address"},{"internalType":"uint256","name":"makerWei","type":"uint256"},{"internalType":"uint256[]","name":"makerIds","type":"uint256[]"},{"internalType":"address","name":"taker","type":"address"},{"internalType":"uint256","name":"takerWei","type":"uint256"},{"internalType":"uint256[]","name":"takerIds","type":"uint256[]"},{"internalType":"uint256","name":"expiry","type":"uint256"}],"name":"cancelTrade","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"claimPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimtoken","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenIndex","type":"uint256"}],"name":"forceBuy","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"forceBuyInterval","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"forceBuyPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getClaimPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"marketPaused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ownerCutTotalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bool","name":"_paused","type":"bool"}],"name":"pauseMarket","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"pendingWithdrawals","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"prizeCutTotalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"publicSale","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"saleDuration","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"saleStartTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint8","name":"robotNumber1","type":"uint8"},{"internalType":"string","name":"robotString1","type":"string"},{"internalType":"uint8","name":"robotNumber2","type":"uint8"},{"internalType":"string","name":"robotString2","type":"string"},{"internalType":"uint8","name":"robotNumber3","type":"uint8"},{"internalType":"string","name":"robotString3","type":"string"},{"internalType":"uint8","name":"robotNumber4","type":"uint8"},{"internalType":"string","name":"robotString4","type":"string"}],"name":"sstoreRobot","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"stack","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_price","type":"uint256"},{"internalType":"uint256","name":"_forceBuyPrice","type":"uint256"},{"internalType":"uint256","name":"_forceBuyInterval","type":"uint256"},{"internalType":"uint256","name":"_saleDuration","type":"uint256"}],"name":"startSale","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"familyId","type":"uint256"}],"name":"takeAJack","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"tokenAssign","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"tokenIndexToAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"maker","type":"address"},{"internalType":"uint256","name":"makerWei","type":"uint256"},{"internalType":"uint256[]","name":"makerIds","type":"uint256[]"},{"internalType":"address","name":"taker","type":"address"},{"internalType":"uint256","name":"takerWei","type":"uint256"},{"internalType":"uint256[]","name":"takerIds","type":"uint256[]"},{"internalType":"uint256","name":"expiry","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"tradeValid","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenIndex","type":"uint256"}],"name":"transferToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]);
+        
+		
+		
+		
+		function cpzFunction(arg) {
+		
+        
+        var dataKind = el('#dataKind').value;
+		var dataTarget = document.getElementById('data');
+		
+		document.getElementById('dataWrapper').style.display = "none";
+		document.getElementById('dataWrapperLabel1').style.display = "none";
+		document.getElementById('dataWrapperInput1').style.display = "none";
+		document.getElementById('dataWrapperLabel2').style.display = "none";
+		document.getElementById('dataWrapperInput2').style.display = "none";
+            
+          if (arg === 'withdraw') {
+            dataTarget.value = MyContract.methods.withdraw().encodeABI();
+          }            
+          if (arg === 'claimtoken') {
+            dataTarget.value = MyContract.methods.claimtoken().encodeABI();
+          }            
+          if (arg === 'deposit') {
+            dataTarget.value = MyContract.methods.deposit().encodeABI();
+          }            
+          if (arg === 'takeAJack') {
+			document.getElementById('dataWrapper').style.display = "block";
+			document.getElementById('dataWrapperLabel1').style.display = "block";
+			document.getElementById('dataWrapperInput1').style.display = "block";
+			document.getElementById('dataWrapperLabel1').innerHTML = "Set number (uint)";
+			
+			document.getElementById('dataWrapperButton').setAttribute("onclick", "addCpzTx('takeAJack','1')");
+			
+			
+            //dataTarget.value = MyContract.methods.takeAJack(0).encodeABI();
+          }            
+          if (arg === 'forceBuy') {
+		  	document.getElementById('dataWrapper').style.display = "block";
+			document.getElementById('dataWrapperLabel1').style.display = "block";
+			document.getElementById('dataWrapperInput1').style.display = "block";
+			document.getElementById('dataWrapperLabel1').innerHTML = "Piece number (uint)";
+			
+			document.getElementById('dataWrapperButton').setAttribute("onclick", "addCpzTx('forceBuy','1')");
+			
+          }
+		  if (arg === 'transferToken') {
+            document.getElementById('dataWrapper').style.display = "block";
+			document.getElementById('dataWrapperLabel1').style.display = "block";
+			document.getElementById('dataWrapperInput1').style.display = "block";
+			document.getElementById('dataWrapperLabel1').innerHTML = "To address (address)";
+			
+			document.getElementById('dataWrapperLabel2').style.display = "block";
+			document.getElementById('dataWrapperInput2').style.display = "block";
+			document.getElementById('dataWrapperLabel2').innerHTML = "Piece number (uint)";
+			
+			document.getElementById('dataWrapperButton').setAttribute("onclick", "addCpzTx('transferToken','2')");
+          }
+
+      }
+	  
+	  function addCpzTx(method,argnumber) {
+	 
+	 if (argnumber == 1) {
+	 
+	 document.getElementById('data').value = eval("MyContract.methods."+method+"("+document.getElementById('dataWrapperInput1').value+").encodeABI()");
+	 
+	 } else if (argnumber == 2) {
+	 var addressToAdd = document.getElementById('dataWrapperInput1').value;
+	 var tokenId = document.getElementById('dataWrapperInput2').value;
+	 document.getElementById('data').value = eval("MyContract.methods."+method+"('"+addressToAdd+"',"+tokenId+").encodeABI()");
+	 }
+	 
+	 
+	 }
+	
+	</script>
+    </body>
+  
+  </html>
+  
